@@ -52,29 +52,46 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupObservers() {
-        mainViewModel.users.observe(this) {
-            val result = it ?: return@observe
-            binding.apply {
-                recyclerViewUsers.isVisible = !result.data.isNullOrEmpty()
-                progressBarLoadingUsers.isVisible = result is Resource.Loading
-                if(!result.data.isNullOrEmpty()) {
-                    adapter.setUserList(result.data)
-                }
-            }
-        }
-
         mainViewModel.mainShared.observe(this) {
             when(it) {
-                is MainStateEvent.Error -> {
+                is MainStateEvent.FetchUsersSuccess -> {
+                    // Managed as State
+                }
+                is MainStateEvent.FetchUsersLoading -> {
+                    // Managed as State
+                }
+                is MainStateEvent.FetchUsersError -> {
                     Toast.makeText(this, it.t.message, Toast.LENGTH_LONG).show()
+                }
+                is MainStateEvent.Empty -> {
+                    // Do Nothing
                 }
             }
         }
-    }
 
-    override fun onStart() {
-        super.onStart()
-        mainViewModel.onStart()
+        mainViewModel.mainState.observe(this) {
+            when(it) {
+                is MainStateEvent.FetchUsersSuccess -> {
+                    binding.recyclerViewUsers.isVisible = true
+                    binding.progressBarLoadingUsers.isVisible = false
+                }
+                is MainStateEvent.FetchUsersLoading -> {
+                    binding.recyclerViewUsers.isVisible = true
+                    binding.progressBarLoadingUsers.isVisible = true
+                }
+                is MainStateEvent.FetchUsersError -> {
+                    // Managed as Event
+                }
+                is MainStateEvent.Empty -> {
+                    binding.recyclerViewUsers.isVisible = true
+                    binding.progressBarLoadingUsers.isVisible = false
+                }
+            }
+        }
+
+        mainViewModel.users.observe(this) {
+            adapter.setUserList(it)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
